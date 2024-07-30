@@ -10,6 +10,8 @@ from deepface.commons import image_utils
 from deepface.modules import detection, preprocessing
 from deepface.models.FacialRecognition import FacialRecognition
 
+from FaceRec.NFR2.deepface.modules import modeling
+
 
 def represent(
     img_path: Union[str, np.ndarray],
@@ -27,8 +29,8 @@ def represent(
     # model: FacialRecognition = modeling.build_model(model_name)
     # 
     project_path = os.getcwd()
-    # model :FacialRecognition =load_model("D://NFR2/NFRmodel.h5")
-    model = FacialRecognition("D://NFR2/NAFF.h5")
+
+    model: FacialRecognition = modeling.build_model("NFR")
     # ---------------------------------
     # we have run pre-process in verification. so, this can be skipped if it is coming from verify.
     target_size = model.input_shape
@@ -82,8 +84,8 @@ def represent(
 
         # custom normalization
         img = preprocessing.normalize_input(img=img, normalization=normalization)
-
         embedding = model.forward(img)
+        # embedding=model(img, training=False).numpy()[0].tolist()
 
         resp_obj = {}
         resp_obj["embedding"] = embedding
@@ -92,3 +94,8 @@ def represent(
         resp_objs.append(resp_obj)
 
     return resp_objs
+
+
+
+    # model :FacialRecognition =load_model("D://NFR2/NFRmodel.h5")
+    # model = FacialRecognition("D://NFR2/NAFF.h5")

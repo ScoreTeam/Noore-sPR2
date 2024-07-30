@@ -1,4 +1,5 @@
 # common dependencies
+import glob
 import os,cv2,warnings,logging,sys
 from typing import Any, Dict, List, Union, Optional
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
@@ -22,27 +23,64 @@ warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 tf_version = package_utils.get_tf_major_version()
 tf.get_logger().setLevel(logging.ERROR)
-def FindFaceFromImage(image_path):
+def FindFaceFromImage(image_path,silent):
     frame = cv2.imread(image_path)
 
-    result = find(img_path=image_path, db_path='D://DatabaseFR', enforce_detection=False, model_name='VGGFace')
+    result = find(img_path=image_path, db_path='DatabaseFR', enforce_detection=False, model_name='VGGFace',silent=silent)
+    # if silent == False:print(result)
     print(result)
+    best_index = 0
+    distanceThreshold=0.03
+
+    
 
     for res in result:
-        if 'identity' in res and len(res['identity']) > 0:
-            name = res['identity'][0].split('/')[2].split('\\')[1].split('.')[0]
-            xmin = int(res['source_x'][0])
-            ymin = int(res['source_y'][0])
-            w = res['source_w'][0]
-            h = res['source_h'][0]
+        
+        if 'identity' in res and len(res['identity']) > 0 and res['distance'][best_index]<distanceThreshold: 
+
+            print("in here")
+            name = res['identity'][best_index].split("\\")[1].split(".")[0]
+            xmin = int(res['source_x'][best_index])
+            ymin = int(res['source_y'][best_index])
+            w = res['source_w'][best_index]
+            h = res['source_h'][best_index]
             xmax = int(xmin + w)
             ymax = int(ymin + h)
-            dis=res['distance'][0]
+            dis=res['distance'][best_index]
+            # id = name[-1]
+            id = name.split('_')[-1]
+
+            # Draw rectangle and put text on the frame
             cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (1, 255, 1), 1)
             cv2.putText(frame, name, (xmin, ymin), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-            return name,xmin,ymin,w,h,xmax,ymax,dis
-
-    return "No one",0,0,0,0,0,0,0
+            newimagepath="RecFaces/Detectedface.jpg"
+            increameant=1
+            while os.path.exists(newimagepath):
+                newimagepath="RecFaces/Detectedface_"+str(increameant)+".jpg"
+                increameant+=1
+            cv2.imwrite(newimagepath,frame)
+            # modify the id thing to cal after _
+            if name[:8]=="Customer":
+                return ["customer",id,name,xmin,ymin,w,h,xmax,ymax,dis]
+            else:   
+                return ["employee",id,name,xmin,ymin,w,h,xmax,ymax,dis]
+        else:
+            # im adding the new customer faces into the database
+            print("adding new customer...")
+            increameant=200
+            newimagepath=f"DatabaseFR/Customer_{increameant}.jpg"
+            while os.path.exists(newimagepath):
+                increameant+=1
+                newimagepath="DatabaseFR/Customer_"+str(increameant)+".jpg"
+            # cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (1, 255, 1), 1)
+            # cv2.putText(frame, "customer", (0, 0), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+            cv2.imwrite(newimagepath,frame)
+            """"
+            note: discuss this (im currently send the customer with no identity in the database as empty, so he will skip a frame but in the next frame he will back claed)
+            """
+        return ["customer",increameant,f"Customer{increameant}",0,0,0,0,0,0,0,]
+            
+            
 def find(
     img_path: Union[str, np.ndarray],
     db_path: str,
