@@ -161,7 +161,7 @@ def find(
     if len(representations) == 0:
         if not silent:
             toc = time.time()
-            logger.info(f"find function duration {toc - tic} seconds")
+            logger.info(f"find function duration {toc - tic} secondsfff")
         return []
 
     # ----------------------------

@@ -150,7 +150,10 @@ def extract_faces(
             f"Exception while extracting faces from {img_name}."
             "Consider to set enforce_detection arg to False."
         )
-
+    # print("************************")
+    # print(resp_obj)
+    # print("************************")
+    
     return resp_objs
 
 
